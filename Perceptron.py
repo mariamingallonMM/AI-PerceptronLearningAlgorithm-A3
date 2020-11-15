@@ -2,7 +2,7 @@
 This code implements a perceptron algorithm (PLA). 
 First, we visualise the dataset which contains 2 features. We can see that the dataset can be clearly separated by drawing a straight line between them. The goal is to write an algorithm that finds that line and classifies all of these data points correctly.
 
-The output file is the 'thershold' line in a csv format ('output1_f.csv'). Each time it goes through each of the examples in 'input1.csv', it adds a new line to the output file containing a comma-separated list of the weights w_1, w_2, and b (bias) in that order. 
+The output file (e.g. 'output1_f.csv') contains the values of w1, w2 and b which define the 'threshold' line. The last row will be the most accurate one. Each time it goes through each of the examples in 'input1.csv', it adds a new line to the output file containing a comma-separated list of the weights w_1, w_2, and b (bias) in that order. 
 
 Upon convergence, the program stops, and the final values of w_1, w_2, and b are printed to the output file (output1.csv). This defines the decision boundary that your PLA has computed for the given dataset.
 
@@ -34,10 +34,10 @@ class Perceptron:
         # Read sample output data
         df_out = pd.read_csv(output_path, names=names_out)
 
-        return (df, df_out)
+        return df, df_out
 
 
-    def perceptron_classify(df = df, df_out = df_out, n:int = 10, names_in:list = ['feature1','feature2','label']):
+    def perceptron_classify(df = df, df_out = df_out, n:int = 200, names_in:list = ['feature1','feature2','labels']):
         """
         1. set b = w = 0
         2. for N iterations, or until weights do not change
@@ -56,38 +56,23 @@ class Perceptron:
 
         # assign zero weight as a starting point to features and labels
         w = np.zeros(shape=(1, features.shape[1]+1)) #e.g. array([0., 0., 0.])
-
-        misclassified_ = []
-        w_ = w
+        w_ = np.empty(shape=[0,3]) # declare w_ as an empty matrix of same shape as w
 
         for iteration in range(0,n):
             for x, label in zip(features, labels):
-                misclassified = 0
-                x = np.insert(x, 2, 1)
-                y = int(np.dot(w, x.transpose()).item(0,0))
-                
-                if y > 0:
-                    g = 1.0
+                x = np.insert(x, 0, 1) # add a column of 1s to represent w0
+                f = np.dot(w, x.transpose()) # a scalar
+                if f * label <= 0:
+                    w += (x * label.item(0,0)).tolist() # because label comes from being a matrix (matrix([[1.]])) and needs to be converted to scalar
                 else:
-                    g = 0.0
-                """
-                f(x) = 1 if w · x + b > 0
-                        0 otherwise
-                w <- w + (y - f(x)) * x
-                """
-                delta = (label.item(0,0) - g)
-                
-                if(delta): # if delta is not zero, then datapoint is misclassified
-                    misclassified += 1
-                        #append the new weights vector
-                        #w += delta * x
-                    w_ = np.vstack([w_, delta * x])
-            misclassified_.append(misclassified)
-            print("loop", iteration)
-        return (w_, misclassified_)
+                    iteration = n
+
+            w_ = np.vstack((w_, w))
+            
+        return w_, w_[-1]
 
 
-    def plot_results(df = df, weights:list = w_, names_in:list = ['feature1','feature2','labels']):
+    def plot_results(df = df, weights = w, names_in:list = ['feature1','feature2','labels']):
         """
         Plot the Perceptron classifier, from the following inputs:
         - source_file: csv file with the input samples
@@ -111,17 +96,17 @@ class Perceptron:
                                         showlegend=False))  # turn off legend only for this item
 
         # Create the 1D array for X values from the first feature; this is just to be able to plot a line
-        # within the space define by the two features explored
-        X = np.linspace(0, df[names_in[1]].max(), weights.shape[0])
-        # Vector Y will calculated from the weights, a, b, and c and the value of X in its 1D linear space
+        # within the space defined by the two features explored
+        X = np.linspace(0, max(df[names_in[0]].max(),df[names_in[1]].max()))
+        # Vector Y will calculated from the weights, w1, w2, the bias, b, and the value of X in its 1D linear space
         Y = []
 
-        for a, b, c in (matrix.tolist()[0] for matrix in weights):
+        for b, w1, w2 in [weights]: #(matrix.tolist()[0] for matrix in weights):
             for x in X:
-                if b == 0:
-                    y = -1.0
+                if w2 == 0:
+                    y = 0.0
                 else:
-                    y = (c - a * x) / b # per the equation of a line, e.g. C = Ax + By
+                    y = (-(b / w2) / (b / w1))* x + (-b / w2) # per the equation of a line, e.g. C = Ax + By
                 Y.append(y)
 
         # Add the threshold line to the plot
@@ -140,25 +125,27 @@ class Perceptron:
         # create an images directory if not already present
         if not os.path.exists("images"):
             os.mkdir("images")
-        # write the png file with the plot/figure
+        ## write the png file with the plot/figure
         return fig.write_image("images/fig1.png")
     
 
-    def write_csv(filename = 'output1_f.csv', w = w_):
+    def write_csv(filename:str='submission_1.csv', weights = w_):
         # write the outputs csv file
         filepath = os.path.join(os.getcwd(),'datasets','out', filename)
-        df = pd.DataFrame(w)
-        df.to_csv(filepath, index=False)
+        dataframe = pd.DataFrame(data=weights, columns=('b','w1','w2'))
+        # reorder the columns in the dataframe in accordance with assignment 
+        order = [1,2,0] # setting column's order, 'b' goes as first column followed by weights
+        dataframe = dataframe[[dataframe.columns[i] for i in order]]
+        dataframe.to_csv(filepath)
         return print("New Outputs file saved to: <<", filename, ">>", sep='', end='\n')
 
 
     def main():
-        (df, df_out) = get_data()
-        (w_, misclassified_) = perceptron_classify()
+        df, df_out = get_data()
+        w_, w = perceptron_classify()
         plot_results()
-        write_csv()
-        return print('plot and output.csv files ready')
-
+        write_csv('submission_1.csv', w_)
+        return print('plot and output csv files are ready')
 
     if __name__ == '__main__':
         main()

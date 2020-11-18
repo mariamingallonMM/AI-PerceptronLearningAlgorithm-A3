@@ -68,27 +68,31 @@ def gradient_descent(df=df, iterations:int = 100, precision:float = 10**(-6), le
 
     m = y.shape[0]
     
-    betas = np.zeros((2, iterations)) #initialize betas as zeros, e.g. array([0., 0., 0.])
+    beta_history = np.zeros((2, iterations)) #initialize betas as zeros, e.g. array([0., 0., 0.])
     betas_new =[]
+    beta_0 = np.random.randn(2,iterations)
     i = 0
     for alfa in learning_rates:
         while i < iterations:
-            prediction = np.dot(X, betas)
-            beta = betas - (1/m) * alfa *(X.T.dot((prediction - y)))
+            prediction = np.dot(X, beta_0)
+            beta_0 = beta_0 - (1/m) * alfa *(X.T.dot((prediction - y)))
+            beta_history = beta_0.T
             i += 1
-        betas_new.append(np.mean(beta, axis = 1))
-    return betas_new
+        betas_new.append(np.mean(beta_0, axis = 1))
+    return beta_0, betas_new, prediction
  
+#TODO: fix beta_0, number of items is not right, probably to do with shape not being correctly defined at the start
 
-def write_csv(filename:str='outputs_2a.csv', betas_new:list = betas_new, iterations:int = iterations, learning_rates:tuple = (0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10)):
+def write_csv(filename:str='outputs_2a.csv', beta_0:list = beta_0, betas_new:list = betas_new, iterations:int = iterations, learning_rates:tuple = (0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10)):
         # write the outputs csv file
         filepath = os.path.join(os.getcwd(),'datasets','out', filename)
         iter_array = np.full(len(learning_rates), iterations)
         df_iter = pd.DataFrame(iter_array)
         df_lr = pd.DataFrame(learning_rates)
+        df_b_0 = pd.DataFrame(beta_0)
         df_b = pd.DataFrame(betas_new)
-        df_final = pd.concat([df_iter, df_lr, df_b], axis = 1, ignore_index = True)
-        dataframe = df_final.rename(columns={0:'learning_rate',1:'iterations',2:'b_age',3:'b_weight'})
+        df_final = pd.concat([df_iter, df_lr, df_b_0, df_b], axis = 1, ignore_index = True)
+        dataframe = df_final.rename(columns={0:'alpha',1:'number_of_iterations',2:'b_0', 3:'b_age',4:'b_weight'})
         dataframe.to_csv(filepath)
         return print("New Outputs file saved to: <<", filename, ">>", sep='', end='\n')
 

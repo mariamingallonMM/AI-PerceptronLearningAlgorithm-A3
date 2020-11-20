@@ -24,28 +24,23 @@ import sys
 # 3rd party modules
 import pandas as pd
 import numpy as np
-#import plotly.graph_objects as go
+import plotly.graph_objects as go
 
 class problem1:
 
-    def __file__(self):
-        return problem1.py
     
-    def get_data(source_file:str = 'input1.csv', output_file:str = 'output1.csv', names_in:list = ['feature1','feature2','labels'], names_out:list =['A','B','C']):
+    def get_data(source_file, names_in:list = ['feature1','feature2','labels']):
 
         # Define input and output filepaths
         input_path = os.path.join(os.getcwd(),'datasets','in', source_file)
-        output_path = os.path.join(os.getcwd(),'datasets','out', output_file)
 
         # Read input data
         df = pd.read_csv(input_path, names=names_in)
-        # Read sample output data
-        df_out = pd.read_csv(output_path, names=names_out)
-
-        return df, df_out
+      
+        return df
 
 
-    def perceptron_classify(df, df_out, n:int = 200, names_in:list = ['feature1','feature2','labels']):
+    def perceptron_classify(df, n:int = 200, names_in:list = ['feature1','feature2','labels']):
         """
         1. set b = w = 0
         2. for N iterations, or until weights do not change
@@ -80,64 +75,63 @@ class problem1:
         return (w_, w_[-1])
 
 
-    #def plot_results(df = df, weights = w, names_in:list = ['feature1','feature2','labels']):
-    #    """
-    #    Plot the Perceptron classifier, from the following inputs:
-    #    - source_file: csv file with the input samples
-    #    - output_file: csv file with a sample output threshold line
-    #    - names_in: a list of the names of the columns (headers) in the input df
-    #    - names_out: a list of the names of the columns (headers) in the output df
-    #    returns:
-    #    - a plot of the figure in the default browser, and
-    #    - a PNG version of the plot to the "images" project directory
-    #    """ 
-    #    # Create the figure for plotting the initial data
-    #    fig = go.Figure(data=go.Scatter(x=df[names_in[0]], 
-    #                                    y=df[names_in[1]],
-    #                                    mode='markers',
-    #                                    marker=dict(
-    #                                    color=df[names_in[2]],
-    #                                    colorscale='Viridis',
-    #                                    line_width=1,
-    #                                    size = 16),
-    #                                    text=df[names_in[2]], # hover text goes here
-    #                                    showlegend=False))  # turn off legend only for this item
+    def plot_results(df, weights, names_in:list = ['feature1','feature2','labels']):
+        """
+        Plot the Perceptron classifier, from the following inputs:
+        - source_file: csv file with the input samples
+        - weights: from perceptron_classify function
+        - names_in: a list of the names of the columns (headers) in the input df
+        returns:
+        - a plot of the figure in the default browser, and
+        - a PNG version of the plot to the "images" project directory
+        """ 
+        # Create the figure for plotting the initial data
+        fig = go.Figure(data=go.Scatter(x=df[names_in[0]], 
+                                        y=df[names_in[1]],
+                                        mode='markers',
+                                        marker=dict(
+                                        color=df[names_in[2]],
+                                        colorscale='Viridis',
+                                        line_width=1,
+                                        size = 16),
+                                        text=df[names_in[2]], # hover text goes here
+                                        showlegend=False))  # turn off legend only for this item
 
-    #    # Create the 1D array for X values from the first feature; this is just to be able to plot a line
-    #    # within the space defined by the two features explored
-    #    X = np.linspace(0, max(df[names_in[0]].max(),df[names_in[1]].max()))
-    #    # Vector Y will calculated from the weights, w1, w2, the bias, b, and the value of X in its 1D linear space
-    #    Y = []
+        # Create the 1D array for X values from the first feature; this is just to be able to plot a line
+        # within the space defined by the two features explored
+        X = np.linspace(0, max(df[names_in[0]].max(),df[names_in[1]].max()))
+        # Vector Y will calculated from the weights, w1, w2, the bias, b, and the value of X in its 1D linear space
+        Y = []
 
-    #    for b, w1, w2 in [weights]: #(matrix.tolist()[0] for matrix in weights):
-    #        for x in X:
-    #            if w2 == 0:
-    #                y = 0.0
-    #            else:
-    #                y = (-(b / w2) / (b / w1))* x + (-b / w2) # per the equation of a line, e.g. C = Ax + By
-    #            Y.append(y)
+        for b, w1, w2 in [weights]: #(matrix.tolist()[0] for matrix in weights):
+            for x in X:
+                if w2 == 0:
+                    y = 0.0
+                else:
+                    y = (-(b / w2) / (b / w1))* x + (-b / w2) # per the equation of a line, e.g. C = Ax + By
+                Y.append(y)
 
-    #    # Add the threshold line to the plot
-    #    fig.add_trace(go.Scatter(x=X, y=Y,
-    #                                mode= 'lines',
-    #                                name = 'Threshold'))
+        # Add the threshold line to the plot
+        fig.add_trace(go.Scatter(x=X, y=Y,
+                                    mode= 'lines',
+                                    name = 'Threshold'))
 
 
-    #    # Give the figure a title
-    #    fig.update_layout(title='Perceptron Algorithm | Problem 1')
+        # Give the figure a title
+        fig.update_layout(title='Perceptron Algorithm | Problem 1')
 
-    #    # Show the figure, by default will open a browser window
-    #    fig.show()
+        # Show the figure, by default will open a browser window
+        fig.show()
 
-    #    # export plot to png file to images directory
-    #    # create an images directory if not already present
-    #    if not os.path.exists("images"):
-    #        os.mkdir("images")
-    #    ## write the png file with the plot/figure
-    #    return fig.write_image("images/fig1.png")
+        # export plot to png file to images directory
+        # create an images directory if not already present
+        if not os.path.exists("images"):
+            os.mkdir("images")
+        ## write the png file with the plot/figure
+        return fig.write_image("images/fig1.png")
     
 
-    def write_csv(filename:str='submission_1.csv', weights = w_):
+    def write_csv(filename, weights):
         # write the outputs csv file
         filepath = os.path.join(os.getcwd(),'datasets','out', filename)
         dataframe = pd.DataFrame(data=weights, columns=('b','w1','w2'))
@@ -150,23 +144,14 @@ class problem1:
 
     def main():
 
-        #take string of input data csv file
-        in_data = str(sys.argv[1])
-    
-        #take string of input data csv file
-        out_data = str(sys.argv[2])
+        in_data = 'input1.csv'
+        out_data = 'output1.csv'
 
-        if in_data and out_data:
-            #add functions execute here
-            df, df_out = get_data(in_data)
-            (w_, w) = perceptron_classify(df, df_out)
-            if w_:
-                write_csv(out_data, w_)
-                print("Plot and output csv files are ready !")
-        else:
-            print("Enter valid command arguments !")
+        df = get_data(in_data)
+        (w_, w) = perceptron_classify(df)
+        plot_results(df, w)
+        write_csv(out_data, w_)
 
-        return
 
     if __name__ == '__main__':
 

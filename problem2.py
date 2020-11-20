@@ -1,25 +1,11 @@
 ﻿"""
-Step1:
+# Execution
+## $ python3 problem2.py input2.csv output2.csv
+### This should generate an output file called output2.csv. There are ten cases in total, nine with the specified learning rates (and 100 iterations), and one with your own choice of learning rate (and your choice of number of iterations). After each of these ten runs, your program must print a new line to the output file, containing a comma-separated list of alpha, number_of_iterations, b_0, b_age, and b_weight in that order (see example), please do not round you your numbers. These represent the regression models that your gradient descents have computed for the given dataset.
 
-cur_x = 3 # The algorithm starts at x=3
-rate = 0.01 # Learning rate
-precision = 0.000001 #This tells us when to stop the algorithm
-previous_step_size = 1 #
-max_iters = 10000 # maximum number of iterations
-iters = 0 #iteration counter
-df = lambda x: 2*(x+5) #Gradient of our function 
+### For the output, please follow the exact format, with no extra commas, change in upper/lower case etc. Extra unnecessary commas may make the automated script fail and result in you losing points.
 
-
-Step 2:
-
-while previous_step_size > precision and iters < max_iters:
-    prev_x = cur_x #Store current x value in prev_x
-    cur_x = cur_x - rate * df(prev_x) #Grad descent
-    previous_step_size = abs(cur_x - prev_x) #Change in x
-    iters = iters+1 #iteration count
-    print("Iteration",iters,"\nX value is",cur_x) #Print iterations
-    
-print("The local minimum occurs at", cur_x)
+### What To Submit. problem2.py, which should behave as specified above. Before you submit, the RUN button on Vocareum should help you determine whether or not your program executes correctly on the platform.
 
 """
 
@@ -39,13 +25,13 @@ import numpy as np
 
 # Prepare data
 
-def get_data(source_file:str = 'input2.csv', names_in:list = ['age','weight','height']):
+def get_data(source_file:str = 'input2.csv'):
 
 # Define input and output filepaths
     input_path = os.path.join(os.getcwd(),'datasets','in', source_file)
 
     # Read input data
-    df = pd.read_csv(input_path, names=names_in)
+    df = pd.read_csv(input_path)
     
     for col in df.columns:
         df[col] = (df[col] - np.mean(df[col]))/np.std(df[col])
@@ -53,7 +39,7 @@ def get_data(source_file:str = 'input2.csv', names_in:list = ['age','weight','he
     return df
 
 
-def gradient_descent(df=df, iterations:int = 100, precision:float = 10**(-6), learning_rates:tuple = (0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10)):
+def gradient_descent(df=df, iterations:int = 100, learning_rates:tuple = (0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10)):
 
     """
     X:dataframe of feature columns: age and weight
@@ -62,48 +48,56 @@ def gradient_descent(df=df, iterations:int = 100, precision:float = 10**(-6), le
     learning_rate: 
     iterations: 
     """
-    X = df[df.columns[0:2]].values
-    y = df[df.columns[2]].to_numpy()
-    y = y[:, np.newaxis]
+    df = pd.concat([pd.Series(1, index=df.index, name='b_0'), df], axis=1)
+    
+    X = df[df.columns[0:3]].values
+
+    y = df[df.columns[3]].to_numpy()
+    #y = y[:, np.newaxis]
 
     m = y.shape[0]
-    
-    beta_history = np.zeros((2, iterations)) #initialize betas as zeros, e.g. array([0., 0., 0.])
+    betas = np.zeros(X.shape[1]) #initialize betas as zeros, e.g. array([0., 0., 0.])
     betas_new =[]
-    beta_0 = np.random.randn(2,iterations)
-    i = 0
-    for alfa in learning_rates:
-        while i < iterations:
-            prediction = np.dot(X, beta_0)
-            beta_0 = beta_0 - (1/m) * alfa *(X.T.dot((prediction - y)))
-            beta_history = beta_0.T
-            i += 1
-        betas_new.append(np.mean(beta_0, axis = 1))
-    return beta_0, betas_new, prediction
- 
-#TODO: fix beta_0, number of items is not right, probably to do with shape not being correctly defined at the start
 
-def write_csv(filename:str='outputs_2a.csv', beta_0:list = beta_0, betas_new:list = betas_new, iterations:int = iterations, learning_rates:tuple = (0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10)):
+    for alfa in learning_rates:
+        i = 0
+        while i < iterations:
+            hypothesis = np.dot(X, betas)
+            #hypothesis = hypothesis.reshape(hypothesis.shape[0],1)
+            betas = betas - (1/m) * alfa *(X.T.dot((hypothesis - y)))
+            i += 1
+        betas_new.append(betas)
+
+    return betas_new
+ 
+def write_csv(filename:str='output2.csv', betas_new:list = betas_new, iterations:int = 100, learning_rates:tuple = (0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10)):
         # write the outputs csv file
         filepath = os.path.join(os.getcwd(),'datasets','out', filename)
         iter_array = np.full(len(learning_rates), iterations)
         df_iter = pd.DataFrame(iter_array)
         df_lr = pd.DataFrame(learning_rates)
-        df_b_0 = pd.DataFrame(beta_0)
         df_b = pd.DataFrame(betas_new)
-        df_final = pd.concat([df_iter, df_lr, df_b_0, df_b], axis = 1, ignore_index = True)
+        df_final = pd.concat([df_lr, df_iter, df_b], axis = 1, ignore_index = True)
         dataframe = df_final.rename(columns={0:'alpha',1:'number_of_iterations',2:'b_0', 3:'b_age',4:'b_weight'})
-        dataframe.to_csv(filepath)
+        dataframe.to_csv(filepath, index = False, header = False)
         return print("New Outputs file saved to: <<", filename, ">>", sep='', end='\n')
 
+
+def main():
+    """
+    ## $ python3 problem2.py input2.csv output2.csv
+    """
+    #take string for input data csv file
+    in_data = str(sys.argv[1])
+    #take string for output data csv file
+    out_data = str(sys.argv[2])
+
+    df = get_data(in_data)
+    betas_new = gradient_descent(df)
+    write_csv(out_data, betas_new)
+
+if __name__ == '__main__':
+    main()
+
+
     
-
-#Compare the convergence rate when α is small versus large. What is the ideal learning rate to obtain an accurate model? In addition to the nine learning rates above, come up with your own choice of value for the learning rate. Then, using this new learning rate, run the algorithm for your own choice of number of iterations.
-
-#Implement your gradient descent in a file called problem2.py, which will be executed like so:
-#$ python3 problem2.py input2.csv output2.csv
-#This should generate an output file called output2.csv. There are ten cases in total, nine with the specified learning rates (and 100 iterations), and one with your own choice of learning rate (and your choice of number of iterations). After each of these ten runs, your program must print a new line to the output file, containing a comma-separated list of alpha, number_of_iterations, b_0, b_age, and b_weight in that order (see example), please do not round you your numbers. These represent the regression models that your gradient descents have computed for the given dataset.
-
-#For the output, please follow the exact format, with no extra commas, change in upper/lower case etc. Extra unnecessary commas may make the automated script fail and result in you losing points.
-
-#What To Submit. problem2.py, which should behave as specified above. Before you submit, the RUN button on Vocareum should help you determine whether or not your program executes correctly on the platform.

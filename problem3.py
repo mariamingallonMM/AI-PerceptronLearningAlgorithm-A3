@@ -32,8 +32,18 @@ import math
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
+from sklearn import datasets, linear_model
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score, cross_val_predict
+from sklearn import metrics
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
 
-# get input data
+
+#TODO: add comments to each of the sklearn functions imported above,
+# as to where they are used and why
 
 def get_data(source_file):
 
@@ -100,6 +110,132 @@ def plot_inputs(df, names_in:list = ['A','B','label']):
         ## write the png file with the plot/figure
         return fig.write_image("images/fig3.png")
 
+
+def plot_model(y_test, predictions):
+        """
+        Plot the model dataset as a scatter plot:
+        - on the X axis, plot the y_test vector, e.g. the 'True Values'
+        - on the Y axis, plot the predictions vector, e.g. the 'Predicted Values'
+        returns:
+        - a plot of the figure in the default browser, and
+        - a PNG version of the plot to the "images" project directory
+        """ 
+
+        # Create the figure for plotting the model
+        fig = go.Figure(data=go.Scatter(x=y_test, 
+                                        y=predictions,
+                                        mode='markers'))  
+
+        # Give the figure a title and name the x,y axis as well
+        fig.update_layout(
+            title='Perceptron Algorithm | Classification with support vector classifiers | Labels vs Predictions',
+            xaxis_title='True Values',
+            yaxis_title='Predicted Values')
+
+        # Show the figure, by default will open a browser window
+        fig.show()
+
+        # export plot to png file to images directory
+        # create an images directory if not already present
+        if not os.path.exists("images"):
+            os.mkdir("images")
+        ## write the png file with the plot/figure
+        return fig.write_image("images/fig3-y_test-predictions.png")
+
+def train_split(df, test_percentage:float = 0.40):
+
+    # only define test_percentage, 
+    # by default train_percentage = (1 - test_percentage)
+
+    # our X matrix will be the first two cols of the dataframe: 'A' and 'B'
+    X = df[df.columns[0:2]].values
+    # our y vector will be the third col of the dataframe: 'label'
+    y = df['label']
+    # create training and testing vars
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_percentage, stratify = y)
+    print (X_train.shape, y_train.shape)
+    print (X_test.shape, y_test.shape)
+        
+    return X, y, X_train, X_test, y_train, y_test
+
+def svm_linear_kernel(X, y, X_train, X_test, y_train, y_test, k):
+
+    # fit a model on the training set    
+    svm = linear_model.LinearRegression()
+    model = svm.fit(X_train, y_train)
+    predictions = svm.predict(X_test)
+    scores = model.score(X_test, y_test)
+    print("Score:", model.score(X_test, y_test))
+
+    # let's plot the model
+    plot_model(y_test, predictions)
+
+    # Perform 5-fold cross validation
+    # note that cv default value if None is 5-fold and
+    # for cv = int or None, if the estimator is a classifier 
+    # and y is either binary or multiclass, StratifiedKFold is used
+    scores_validated = cross_val_score(svm, X, y, cv = k)
+    print ("Cross-validated scores:", scores_validated)
+
+    return scores, scores_validated, predictions
+
+
+def svm_linear(X, y, X_train, X_test, y_train, y_test, k):
+    kernel_type = 'linear'
+    # C = [0.1, 0.5, 1, 5, 10, 50, 100]
+    svm = make_pipeline(StandardScaler(), SVC(C = 0.1, kernel = kernel_type, gamma='auto'))
+    model = svm.fit(X, y)
+    predictions = svm.predict(X_test)
+    test_score = model.score(X_test, y_test)
+    print("SVM", kernel_type, "Test Score:", test_score, sep=' ')
+
+    # let's plot the model
+    plot_model(y_test, predictions)
+
+    # Perform 5-fold cross validation
+    # note that cv default value if None is 5-fold and
+    # for cv = int or None, if the estimator is a classifier 
+    # and y is either binary or multiclass, StratifiedKFold is used
+    scores_validated = cross_val_score(svm, X, y, cv = k)
+    best_score = max(scores_validated)
+    print ("SVM", kernel_type, "Best of cross-validated scores:", best_score, sep=' ')
+
+    return test_score, best_score, predictions
+
+
+def svm_poly(X, y, X_train, X_test, y_train, y_test, k):
+    kernel_type = 'poly'
+    # C = [0.1, 1, 3], degree = [4, 5, 6], and gamma = [0.1, 0.5]
+    svm = make_pipeline(StandardScaler(), SVC(C = 0.1, kernel = kernel_type, degree = 4, gamma=0.1))
+    model = svm.fit(X, y)
+    predictions = svm.predict(X_test)
+    test_score = model.score(X_test, y_test)
+    print("SVM", kernel_type, "Test Score:", test_score, sep=' ')
+
+    # let's plot the model
+    plot_model(y_test, predictions)
+
+    # Perform 5-fold cross validation
+    # note that cv default value if None is 5-fold and
+    # for cv = int or None, if the estimator is a classifier 
+    # and y is either binary or multiclass, StratifiedKFold is used
+    scores_validated = cross_val_score(svm, X, y, cv = k)
+    best_score = max(scores_validated)
+    print ("SVM", kernel_type, "Best of cross-validated scores:", best_score, sep=' ')
+
+    return test_score, best_score, predictions
+
+def write_csv(filename, a, b, c):
+        # write the outputs csv file
+        filepath = os.path.join(os.getcwd(),'datasets','out', filename)
+        df_a = pd.DataFrame(a)
+        df_b = pd.DataFrame(b)
+        df_c = pd.DataFrame(c)
+        df = pd.concat([df_a, df_b, df_c], axis = 1, ignore_index = True)
+        #dataframe = df.rename(columns={0:'alpha',1:'number_of_iterations',2:'b_0', 3:'b_age',4:'b_weight'})
+        df.to_csv(filepath, index = False, header = False)
+        return print("New Outputs file saved to: <<", filename, ">>", sep='', end='\n')
+
 def main():
     """
     ## $ python3 problem3.py input3.csv output3.csv
@@ -113,8 +249,17 @@ def main():
 
     df = get_data(in_data)
     plot_inputs(df)
-    #write_csv(out_data, betas_new)
-    #print(out_data)
+    X, y, X_train, X_test, y_train, y_test = train_split(df)
+    #scores, scores_validated, predictions = svm_linear_kernel(X, y, X_train, X_test, y_train, y_test, 5)
+
+    test_score, best_score, predictions = svm_linear(X, y, X_train, X_test, y_train, y_test, 5)
+    test_score_poly, best_score_poly, predictions_poly = svm_poly(X, y, X_train, X_test, y_train, y_test, 5)
+    
+    a = ['svm_linear', 'svm_polynomial'] #svm_rbf, logistic, knn, decision_tree, random_forest
+    b = [test_score, test_score_poly]
+    c = [best_score, best_score_poly]
+
+    write_csv(out_data, a, b, c)
 
 if __name__ == '__main__':
     main()

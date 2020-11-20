@@ -26,7 +26,7 @@ $ python3 problem1.py input1.csv output1.csv
 The following is a sample of the output obtained when running the code in problem1.py as it is in Python 3.7.
 
 Example:
-![Initial Dataset and provided Output Threshold]("images/fig1.png")
+![Initial Dataset and provided Output Threshold](images/fig1.png)
 
 ### Useful references:
 
@@ -64,4 +64,25 @@ $ python3 problem2.py input2.csv output2.csv
 
 ## Problem 3: Classification with support vector classifiers
 
+This code implements a support vector classifier using the sklearn package to learn a classification model for a chessboard-like dataset. 
 
+The input dataset is available as input3.csv. The first step is to make a scatter plot of the dataset showing the two classes with two different patterns. The result is this plot:
+
+![Initial Dataset and provided Output Threshold](images/fig3.png)
+
+Use SVM with different kernels to build a classifier. Make sure you split your data into training (60%) and testing (40%). Also make sure you use stratified sampling (i.e. same ratio of positive to negative in both the training and testing datasets). Use cross validation (with the number of folds k = 5) instead of a validation set. You do not need to scale/normalize the data for this question. Train-test splitting and cross validation functionalities are all readily available in sklearn.
+
+SVM with Linear Kernel. Observe the performance of the SVM with linear kernel. Search for a good setting of parameters to obtain high classification accuracy. Specifically, try values of C = [0.1, 0.5, 1, 5, 10, 50, 100]. Read about sklearn.grid_search and how this can help you accomplish this task. After locating the optimal parameter value by using the training data, record the corresponding best score (training data accuracy) achieved. Then apply the testing data to the model, and record the actual test score. Both scores will be a number between zero and one.
+SVM with Polynomial Kernel. (Similar to above).
+Try values of C = [0.1, 1, 3], degree = [4, 5, 6], and gamma = [0.1, 0.5].
+SVM with RBF Kernel. (Similar to above).
+Try values of C = [0.1, 0.5, 1, 5, 10, 50, 100] and gamma = [0.1, 0.5, 1, 3, 6, 10].
+Logistic Regression. (Similar to above).
+Try values of C = [0.1, 0.5, 1, 5, 10, 50, 100].
+k-Nearest Neighbors. (Similar to above).
+Try values of n_neighbors = [1, 2, 3, ..., 50] and leaf_size = [5, 10, 15, ..., 60].
+Decision Trees. (Similar to above).
+Try values of max_depth = [1, 2, 3, ..., 50] and min_samples_split = [2, 3, 4, ..., 10].
+Random Forest. (Similar to above).
+Try values of max_depth = [1, 2, 3, ..., 50] and min_samples_split = [2, 3, 4, ..., 10].
+What To Submit. output3.csv (see example). Please follow the exact format, with no extra commas, change in upper/lower case etc. Extra unnecessary commas may make the automated script fail and result in you losing points. There is no need to submit your actual program. The file should contain an entry for each of the seven methods used. For each method, print a comma-separated list as shown in the example, including the method name, best score, and test score, expressed with as many decimal places as you please. There may be more than one way to implement a certain method, and we will allow for small variations in output you may encounter depending on the specific functions you decide to use.

@@ -35,7 +35,7 @@ def get_data(source_file:str = 'input2.csv'):
     
     for col in df.columns:
         df[col] = (df[col] - np.mean(df[col]))/np.std(df[col])
-
+        #note: numpy.std returns the population standard deviation
     return df
 
 

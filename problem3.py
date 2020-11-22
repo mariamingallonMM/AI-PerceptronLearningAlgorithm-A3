@@ -1,22 +1,6 @@
 """
-you will use the support vector classifiers in the sklearn package to learn a classification model for a chessboard-like dataset. In your starter code, you will find input3.csv, containing a series of data points. Open the dataset in python. Make a scatter plot of the dataset showing the two classes with two different patterns.
-
-Use SVM with different kernels to build a classifier. Make sure you split your data into training (60%) and testing (40%). Also make sure you use stratified sampling (i.e. same ratio of positive to negative in both the training and testing datasets). Use cross validation (with the number of folds k = 5) instead of a validation set. You do not need to scale/normalize the data for this question. Train-test splitting and cross validation functionalities are all readily available in sklearn.
-
-SVM with Linear Kernel. Observe the performance of the SVM with linear kernel. Search for a good setting of parameters to obtain high classification accuracy. Specifically, try values of C = [0.1, 0.5, 1, 5, 10, 50, 100]. Read about sklearn.grid_search and how this can help you accomplish this task. After locating the optimal parameter value by using the training data, record the corresponding best score (training data accuracy) achieved. Then apply the testing data to the model, and record the actual test score. Both scores will be a number between zero and one.
-SVM with Polynomial Kernel. (Similar to above).
-Try values of C = [0.1, 1, 3], degree = [4, 5, 6], and gamma = [0.1, 0.5].
-SVM with RBF Kernel. (Similar to above).
-Try values of C = [0.1, 0.5, 1, 5, 10, 50, 100] and gamma = [0.1, 0.5, 1, 3, 6, 10].
-Logistic Regression. (Similar to above).
-Try values of C = [0.1, 0.5, 1, 5, 10, 50, 100].
-k-Nearest Neighbors. (Similar to above).
-Try values of n_neighbors = [1, 2, 3, ..., 50] and leaf_size = [5, 10, 15, ..., 60].
-Decision Trees. (Similar to above).
-Try values of max_depth = [1, 2, 3, ..., 50] and min_samples_split = [2, 3, 4, ..., 10].
-Random Forest. (Similar to above).
-Try values of max_depth = [1, 2, 3, ..., 50] and min_samples_split = [2, 3, 4, ..., 10].
-What To Submit. output3.csv (see example). Please follow the exact format, with no extra commas, change in upper/lower case etc. Extra unnecessary commas may make the automated script fail and result in you losing points. There is no need to submit your actual program. The file should contain an entry for each of the seven methods used. For each method, print a comma-separated list as shown in the example, including the method name, best score, and test score, expressed with as many decimal places as you please. There may be more than one way to implement a certain method, and we will allow for small variations in output you may encounter depending on the specific functions you decide to use.
+This code implements a support vector classifier using the sklearn package to learn a classification model for a chessboard-like dataset. 
+Written using Python 3.7
 """
 
 
@@ -36,10 +20,14 @@ from sklearn import datasets, linear_model
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score, cross_val_predict
+from sklearn.model_selection import GridSearchCV
 from sklearn import metrics
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestRegressor
 
 
 #TODO: add comments to each of the sklearn functions imported above,
@@ -77,28 +65,10 @@ def plot_inputs(df, names_in:list = ['A','B','label']):
                                         text=df[names_in[2]], # hover text goes here
                                         showlegend=False))  # turn off legend only for this item
 
-        ## Create the 1D array for X values from the first feature; this is just to be able to plot a line
-        ## within the space defined by the two features explored
-        #X = np.linspace(0, max(df[names_in[0]].max(),df[names_in[1]].max()))
-        ## Vector Y will calculated from the weights, w1, w2, the bias, b, and the value of X in its 1D linear space
-        #Y = []
-
-        #for b, w1, w2 in [weights]: #(matrix.tolist()[0] for matrix in weights):
-        #    for x in X:
-        #        if w2 == 0:
-        #            y = 0.0
-        #        else:
-        #            y = (-(b / w2) / (b / w1))* x + (-b / w2) # per the equation of a line, e.g. C = Ax + By
-        #        Y.append(y)
-
-        ## Add the threshold line to the plot
-        #fig.add_trace(go.Scatter(x=X, y=Y,
-        #                            mode= 'lines',
-        #                            name = 'Threshold'))
-
-
         # Give the figure a title
-        fig.update_layout(title='Perceptron Algorithm | Classification with support vector classifiers | Problem 3')
+        fig.update_layout(title='Perceptron Algorithm | Classification with support vector classifiers | Problem 3',
+                          xaxis_title=names_in[0],
+                          yaxis_title=names_in[1])
 
         # Show the figure, by default will open a browser window
         fig.show()
@@ -111,26 +81,41 @@ def plot_inputs(df, names_in:list = ['A','B','label']):
         return fig.write_image("images/fig3.png")
 
 
-def plot_model(y_test, predictions):
+def plot_model(X, y, xx, y_, Z, kernel_type:str):
         """
-        Plot the model dataset as a scatter plot:
-        - on the X axis, plot the y_test vector, e.g. the 'True Values'
-        - on the Y axis, plot the predictions vector, e.g. the 'Predicted Values'
+        Plot the decision boundary from:
+        - X: the features dataset,
+        - y: the labels vector, 
+        - h: step size in the mesh, e.g. 0.02
+        - grid_search: model of the grid_search already fitted
+        - model_type: str of the type of model used for title of plot and filename of image to export
         returns:
         - a plot of the figure in the default browser, and
         - a PNG version of the plot to the "images" project directory
         """ 
 
         # Create the figure for plotting the model
-        fig = go.Figure(data=go.Scatter(x=y_test, 
-                                        y=predictions,
-                                        mode='markers'))  
-
+        fig = go.Figure(data=go.Scatter(x=X[:, 0], y=X[:, 1], 
+                            mode='markers',
+                            showlegend=False,
+                            marker=dict(
+                                color=y,
+                                colorscale='Viridis',
+                                line_width=1,
+                                size = 16),
+                            text='Label', # hover text goes here
+                            showlegend=False))  # turn off legend only for this item
+        
+        # Add the heatmap to the plot
+        fig.add_trace(go.Heatmap(x=xx[0], y=y_, z=Z,
+                          colorscale='Rainbow',
+                          showscale=False))
+        
         # Give the figure a title and name the x,y axis as well
         fig.update_layout(
-            title='Perceptron Algorithm | Classification with support vector classifiers | Labels vs Predictions',
-            xaxis_title='True Values',
-            yaxis_title='Predicted Values')
+            title='Perceptron Algorithm | Classification with support vector classifiers | ' + kernel_type.upper(),
+            xaxis_title='A',
+            yaxis_title='B')
 
         # Show the figure, by default will open a browser window
         fig.show()
@@ -140,7 +125,7 @@ def plot_model(y_test, predictions):
         if not os.path.exists("images"):
             os.mkdir("images")
         ## write the png file with the plot/figure
-        return fig.write_image("images/fig3-y_test-predictions.png")
+        return fig.write_image("images/fig3-" + kernel_type + ".png")
 
 def train_split(df, test_percentage:float = 0.40):
 
@@ -158,72 +143,63 @@ def train_split(df, test_percentage:float = 0.40):
         
     return X, y, X_train, X_test, y_train, y_test
 
-def svm_linear_kernel(X, y, X_train, X_test, y_train, y_test, k):
 
-    # fit a model on the training set    
-    svm = linear_model.LinearRegression()
-    model = svm.fit(X_train, y_train)
-    predictions = svm.predict(X_test)
-    scores = model.score(X_test, y_test)
-    print("Score:", model.score(X_test, y_test))
+def apply_CSVC(X, y, X_train, X_test, y_train, y_test, model_type:str, k: int, kernel_type:str, parameters:dict):
 
-    # let's plot the model
-    plot_model(y_test, predictions)
+    if model_type == 'logistic':
+        logistic = linear_model.LogisticRegression()
+        start = parameters['C'][0]
+        stop = parameters['C'][-1]
+        num = len(parameters['C'])
+        C = np.logspace(start, stop, num)
+        penalty = ['l2']
+        hyperparameters = dict(C=C, penalty=penalty)
+        grid_search = GridSearchCV(logistic, hyperparameters, cv = k, verbose = 0)
 
-    # Perform 5-fold cross validation
-    # note that cv default value if None is 5-fold and
-    # for cv = int or None, if the estimator is a classifier 
-    # and y is either binary or multiclass, StratifiedKFold is used
-    scores_validated = cross_val_score(svm, X, y, cv = k)
-    print ("Cross-validated scores:", scores_validated)
+    if model_type == 'knn':
+        grid_params = parameters
+        grid_search = GridSearchCV(KNeighborsClassifier(), grid_params, cv = k, verbose = 0)
 
-    return scores, scores_validated, predictions
+    if model_type == 'decision_tree':
+        grid_search = GridSearchCV(DecisionTreeClassifier(random_state=42), parameters, verbose=1, cv=3)
 
+    if model_type == 'random_forest':
+        grid_search = GridSearchCV(RandomForestRegressor(random_state=42), parameters, verbose=1, cv=3)
 
-def svm_linear(X, y, X_train, X_test, y_train, y_test, k):
-    kernel_type = 'linear'
-    # C = [0.1, 0.5, 1, 5, 10, 50, 100]
-    svm = make_pipeline(StandardScaler(), SVC(C = 0.1, kernel = kernel_type, gamma='auto'))
-    model = svm.fit(X, y)
-    predictions = svm.predict(X_test)
-    test_score = model.score(X_test, y_test)
-    print("SVM", kernel_type, "Test Score:", test_score, sep=' ')
-
-    # let's plot the model
-    plot_model(y_test, predictions)
-
-    # Perform 5-fold cross validation
-    # note that cv default value if None is 5-fold and
-    # for cv = int or None, if the estimator is a classifier 
-    # and y is either binary or multiclass, StratifiedKFold is used
-    scores_validated = cross_val_score(svm, X, y, cv = k)
-    best_score = max(scores_validated)
-    print ("SVM", kernel_type, "Best of cross-validated scores:", best_score, sep=' ')
-
-    return test_score, best_score, predictions
-
-
-def svm_poly(X, y, X_train, X_test, y_train, y_test, k):
-    kernel_type = 'poly'
-    # C = [0.1, 1, 3], degree = [4, 5, 6], and gamma = [0.1, 0.5]
-    svm = make_pipeline(StandardScaler(), SVC(C = 0.1, kernel = kernel_type, degree = 4, gamma=0.1))
-    model = svm.fit(X, y)
-    predictions = svm.predict(X_test)
-    test_score = model.score(X_test, y_test)
-    print("SVM", kernel_type, "Test Score:", test_score, sep=' ')
+    if model_type == 'none':
+        svc = svm.SVC()
+        # specify cv as integer for number of folds in (stratified)KFold, 
+        # cv set to perform 5-fold cross validation, although 'None' already uses the default 5-fold cross validation
+        grid_search = GridSearchCV(svc, parameters, cv = k) 
+    
+    grid_search.fit(X, y) # fit the model #TODO: clarify if fit shall be done on train datasets or on complete set
+    #get results best and test
+    best_score = grid_search.best_score_
+    predictions = grid_search.predict(X_test)
+    test_score = grid_search.score(X_test, y_test)
+    
+    #print results
+    print("Best parameters for", kernel_type.upper(), "are:", clf.best_params_, sep=' ')
+    print("Best score for", kernel_type.upper(), "is:", clf.best_score_, sep=' ')
+    print("Test score for", kernel_type.upper(), "is:", test_score, sep=' ')
 
     # let's plot the model
-    plot_model(y_test, predictions)
+    x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+    y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+    h = .02  # step size in the mesh
 
-    # Perform 5-fold cross validation
-    # note that cv default value if None is 5-fold and
-    # for cv = int or None, if the estimator is a classifier 
-    # and y is either binary or multiclass, StratifiedKFold is used
-    scores_validated = cross_val_score(svm, X, y, cv = k)
-    best_score = max(scores_validated)
-    print ("SVM", kernel_type, "Best of cross-validated scores:", best_score, sep=' ')
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h)
+                            , np.arange(y_min, y_max, h))
+    y_ = np.arange(y_min, y_max, h)
 
-    return test_score, best_score, predictions
+    Z = grid_search.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+    #print(Z)
+    #Z = Z.reshape((xx.shape[0], xx.shape[1], 3))
+
+    plot_model(X, y, xx, y_, Z, kernel_type)
+    
+    return best_score, test_score
 
 def write_csv(filename, a, b, c):
         # write the outputs csv file
@@ -250,14 +226,20 @@ def main():
     df = get_data(in_data)
     plot_inputs(df)
     X, y, X_train, X_test, y_train, y_test = train_split(df)
-    #scores, scores_validated, predictions = svm_linear_kernel(X, y, X_train, X_test, y_train, y_test, 5)
+   
+    best_score_linear, test_score_linear = apply_CSVC(X, y, X_train, X_test, y_train, y_test, model_type = 'none', k = 5, kernel_type = 'svm_linear', parameters = {'kernel':('linear', 'linear'), 'C':[0.1, 0.5, 1, 5, 10, 50, 100]})
+    best_score_poly, test_score_poly = apply_CSVC(X, y, X_train, X_test, y_train, y_test, model_type = 'none', k = 5, kernel_type = 'svm_polynomial', parameters = {'kernel':('poly', 'poly'), 'gamma':[0.1, 0.5], 'C':[0.1, 1, 3], 'degree':[4, 5, 6]})
+    best_score_rbf, test_score_rbf = apply_CSVC(X, y, X_train, X_test, y_train, y_test, model_type = 'none', k = 5, kernel_type = 'svm_rbf', parameters = {'kernel':('rbf', 'rbf'), 'gamma':[0.1, 0.5, 1, 3, 6, 10], 'C':[0.1, 0.5, 1, 5, 10, 50, 100]})
+    best_score_log, test_score_log = apply_CSVC(X, y, X_train, X_test, y_train, y_test, model_type = 'logistic', k = 5, kernel_type = 'logistic', parameters = {'C':[0.1, 0.5, 1, 5, 10, 50, 100]})
+    best_score_knn, test_score_knn = apply_CSVC(X, y, X_train, X_test, y_train, y_test, model_type = 'knn', k = 5, kernel_type = 'knn', parameters = {'n_neighbors': np.arange(1,51,1),'leaf_size': np.arange(5,61,5)})
+    best_score_dt, test_score_dt = apply_CSVC(X, y, X_train, X_test, y_train, y_test, model_type = 'decision_tree', k = 5, kernel_type = 'decision_tree', parameters = {'max_depth': np.arange(1,51,1),'min_samples_split': np.arange(2,11,1)})
+    best_score_rf, test_score_rf = apply_CSVC(X, y, X_train, X_test, y_train, y_test, model_type = 'random_forest', k = 5, kernel_type = 'random_forest', parameters = {'max_depth': np.arange(1,51,1),'min_samples_split': np.arange(2,11,1)})
 
-    test_score, best_score, predictions = svm_linear(X, y, X_train, X_test, y_train, y_test, 5)
-    test_score_poly, best_score_poly, predictions_poly = svm_poly(X, y, X_train, X_test, y_train, y_test, 5)
-    
-    a = ['svm_linear', 'svm_polynomial'] #svm_rbf, logistic, knn, decision_tree, random_forest
-    b = [test_score, test_score_poly]
-    c = [best_score, best_score_poly]
+
+    a = ['svm_linear', 'svm_polynomial', 'svm_rbf', 'logistic', 'knn', 'decision_tree', 'random_forest']
+    b = [test_score_linear, test_score_poly, test_score_rbf,  test_score_log, test_score_knn, test_score_dt, test_score_rf]
+    c = [best_score_linear, best_score_poly, best_score_rbf, best_score_log, best_score_knn, best_score_dt, best_score_rf]
+
 
     write_csv(out_data, a, b, c)
 

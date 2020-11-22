@@ -78,14 +78,13 @@ The assignment also asks to use cross validation (with the number of folds k = 5
 
 ## C-support vector classification
 
-For this part we will use sklearn [C-support vector classification](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html)
+For this part we will use sklearn [C-support vector classification](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html).
+
+We will use [sklearn.grid_search](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html) to find the optimal parameters using the training data. Next, we record the corresponding best score (training data accuracy) achieved. Then we apply the testing data to the model, and record the actual test score. Both scores will be a number between zero and one which we will need to reflect in the outputs csv file.
 
 ### SVM with Linear Kernel
-
-Observe the performance of the SVM with linear kernel. Search for a good setting of parameters to obtain high classification accuracy. 
+Observe the performance of the SVM with linear kernel. Use sklearn.grid_search to find a good setting of parameters to obtain high classification accuracy. 
 Specifically, try values of C = [0.1, 0.5, 1, 5, 10, 50, 100]. 
-
-Read about sklearn.grid_search and how this can help you accomplish this task. After locating the optimal parameter value by using the training data, record the corresponding best score (training data accuracy) achieved. Then apply the testing data to the model, and record the actual test score. Both scores will be a number between zero and one.
 
 ### SVM with Polynomial Kernel
 As above for linear kernel but now try values of C = [0.1, 1, 3], degree = [4, 5, 6], and gamma = [0.1, 0.5].
@@ -132,8 +131,32 @@ As above for problem 1.
 **Execute as from Vocareum (version python 3.6)***
 $ python3 problem3.py input3.csv output3.csv
 
+### Plotting the results
+
+#### Initial dataset
+![Initial dataset](images/fig3.png)
+#### SVM with Linear Kernel
+![SVM with Linear Kernel](images/fig3-svm_linear.png)
+#### SVM with Polynomial Kernel
+![SVM with Polynomial Kernel](images/fig3-svm_polynomial.png)
+#### SVM with RBF Kernel
+![SVM with RBF Kernel](images/fig3-svm_rbf.png)
+#### Logistic Regression
+![Logistic Regression](images/fig3-logistic.png)
+#### k-Nearest Neighbors
+![k-Nearest Neighbors](images/fig3-knn.png)
+#### Decision Trees
+![Decision Trees](images/fig3-decision_tree.png)
+#### Random Forest
+![Random Forest](images/fig3-random_forest.png)
+
+
 ### Useful references:
 
 - [Stratified Test Train Split](https://www.kaggle.com/vaasha/stratified-test-train-split).
 - [Train/Test Split and Cross Validation in Python](https://towardsdatascience.com/train-test-split-and-cross-validation-in-python-80b61beca4b6) by [Adi Bronshtein](https://medium.com/@adi.bronshtein).
-- []() by []()
+- [Grid Search with Logistic Regression](https://www.kaggle.com/enespolat/grid-search-with-logistic-regression) by [Enes Polat](https://www.kaggle.com/enespolat) and [ML Model_selection Hyperparameter tuning using grid_search](https://chrisalbon.com/machine_learning/model_selection/hyperparameter_tuning_using_grid_search/) by [Chris Albon](https://chrisalbon.com/) specifically for the logistic regression.
+- [k-Neighbors Classifier with GridSearchCV Basics](https://medium.com/@erikgreenj/k-neighbors-classifier-with-gridsearchcv-basics-3c445ddeb657) by [Erik G.](https://medium.com/@erikgreenj) specifically for K-nearest neighbours.
+- [DecisionTree Classifier — Working on Moons Dataset using GridSearchCV to find best hyperparameters](RandomForestRegressor) by [Rohit Madan](https://medium.com/@madanflies) and [Extracting the best fitted DecisionTreeClassifier after Grid Search](https://discuss.analyticsvidhya.com/t/extracting-the-best-fitted-decisiontreeclassifier-after-grid-search/10029) by [Syed Danish](https://discuss.analyticsvidhya.com/u/syed.danish) specifically for decision trees.
+- [Hyperparameter Tuning the Random Forest in Python](https://towardsdatascience.com/hyperparameter-tuning-the-random-forest-in-python-using-scikit-learn-28d2aa77dd74) by [Will Koehrsen](https://medium.com/@williamkoehrsen) and [Random Forest using GridSearchCV](https://www.kaggle.com/sociopath00/random-forest-using-gridsearchcv) by []() specifically for random forests.
+-[Decision Boundaries visualised via Python & Plotly](https://www.kaggle.com/arthurtok/decision-boundaries-visualised-via-python-plotly) for plotting using plotly libraries.

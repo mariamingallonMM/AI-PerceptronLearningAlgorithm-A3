@@ -22,6 +22,7 @@ from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score, cross_val_predict
 from sklearn.model_selection import GridSearchCV
 from sklearn import metrics
+from sklearn import svm
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
@@ -179,8 +180,8 @@ def apply_CSVC(X, y, X_train, X_test, y_train, y_test, model_type:str, k: int, k
     test_score = grid_search.score(X_test, y_test)
     
     #print results
-    print("Best parameters for", kernel_type.upper(), "are:", clf.best_params_, sep=' ')
-    print("Best score for", kernel_type.upper(), "is:", clf.best_score_, sep=' ')
+    print("Best parameters for", kernel_type.upper(), "are:", grid_search.best_params_, sep=' ')
+    print("Best score for", kernel_type.upper(), "is:", grid_search.best_score_, sep=' ')
     print("Test score for", kernel_type.upper(), "is:", test_score, sep=' ')
 
     # let's plot the model
